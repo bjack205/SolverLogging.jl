@@ -1,0 +1,4 @@
+name = "SolverLogger"
+uuid = "35d4892f-6ea9-493e-8cb8-56d0f7450414"
+authors = ["Brian Jackson <bjack205@gmail.com>"]
+version = "0.1.0"
