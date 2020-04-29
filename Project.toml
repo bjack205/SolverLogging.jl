@@ -1,4 +1,8 @@
-name = "SolverLogger"
+name = "SolverLogging"
 uuid = "35d4892f-6ea9-493e-8cb8-56d0f7450414"
 authors = ["Brian Jackson <bjack205@gmail.com>"]
 version = "0.1.0"
+
+[deps]
+Formatting = "59287772-0a20-5a39-b81b-1366585eb4c0"
+Logging = "56ddb016-857b-54e1-b83d-db4d58db5568"
