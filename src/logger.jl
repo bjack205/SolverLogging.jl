@@ -257,8 +257,9 @@ end
 Base.getindex(logger::SolverLogger, level::LogLevel) = logger.leveldata[level]
 
 
-function SolverLogger(min_level::LogLevel=Logging.Info; default_width=10, io::IO=stderr)
-    SolverLogger(io,min_level,default_width,Dict{LogLevel,LogData}(),ConsoleLogger(stderr,min_level))
+function SolverLogger(min_level::LogLevel=Logging.Info; default_width=10, io::IO=stderr,
+        default_logger=ConsoleLogger(stderr, min_level))
+    SolverLogger(io,min_level,default_width,Dict{LogLevel,LogData}(), default_logger)
 end
 
 """
