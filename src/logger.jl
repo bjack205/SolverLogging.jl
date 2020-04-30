@@ -21,7 +21,7 @@ end
 
 
 """
-    LogDta
+    LogData
 
 Holds logging information about a particular print level, meant to assemble
 a table of output where `cols` gives the order and names of columns, `widths`
@@ -75,8 +75,12 @@ Store the current data in the cache
 """
 function cache_data!(ldata::LogData)
     for (key,val) in ldata.data
-        if isempty(val) && eltype(ldata.cache[key]) <: Number
-            val = NaN
+        if isempty(val)
+            if eltype(ldata.cache[key]) <: AbstractFloat
+                val = NaN
+            elseif eltype(ldata.cache[key]) <: Integer
+                val = 0
+            end
         end
         push!(ldata.cache[key],val)
     end
@@ -145,16 +149,17 @@ function add_col!(ldata::LogData,name::Symbol,width::Int=10,idx::Int=0; do_print
     end
 
     # Add to ldata
+    if name == :info
+        ldata.data[name] = String[]
+        ldata.cache[name] = Vector{String}[]
+    else
+        ldata.data[name] = ""
+        ldata.cache[name] = Vector{vartype}(undef,cache_size(ldata))
+    end
     insert!(ldata.cols,idx,name)
     insert!(ldata.widths,idx,width)
     insert!(ldata.print,idx,do_print)
-    if name == :info
-        ldata.data[name] = String[]
-    else
-        ldata.data[name] = ""
-    end
 
-    ldata.cache[name] = Vector{vartype}(undef,cache_size(ldata))
     return nothing
 end
 
@@ -265,13 +270,14 @@ data generated at that level. Additional keyword arguments (from LogData constru
 * vartypes = Vector of variable types for each column
 * do_print = BitArray specifying whether or now the column should be printed (or just cached and not printed)
 """
-function add_level!(logger::SolverLogger, level::LogLevel, cols, widths; print_color=:default,
-        indent=0, kwargs...)
-    logger.leveldata[level] = LogData(cols, widths, color=print_color, indent=indent; kwargs...)
+function add_level!(logger::SolverLogger, level::LogLevel, cols=Symbol[], widths=Int[],
+        vartypes=fill(Any,length(cols)); print_color=:default, indent=0, kwargs...)
+    logger.leveldata[level] = LogData(cols, widths, vartypes=vartypes,
+        color=print_color, indent=indent; kwargs...)
 end
 
 
-function print_level(level::LogLevel, logger=global_logger())
+function print_level(level::LogLevel, logger=current_logger())
     ldata = logger[level]
     if cache_size(ldata) % ldata.freq == 0
         print_header(logger,level)
@@ -299,10 +305,13 @@ end
 Print a row of data and cache it with LogData
 """
 function print_row(logger::SolverLogger,level::LogLevel)
-    if  level >= logger.min_level
-        println(logger.io, create_row(logger.leveldata[level]))
-        cache_data!(logger.leveldata[level])
-        clear!(logger.leveldata[level])
+    if level >= logger.min_level
+        flush(logger.io)
+        ldata = logger.leveldata[level]
+        row = create_row(ldata)
+        println(logger.io, row)
+        cache_data!(ldata)
+        clear!(ldata)
     end
 end
 
