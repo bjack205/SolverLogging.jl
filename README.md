@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.com/bjack205/SolverLogging.jl.svg?branch=master)](https://travis-ci.com/bjack205/SolverLogging.jl)
+
 # SolverLogging.jl
 This package is built to output tabularized logging information from possibly different levels during an optimization solve.
 Each logging level has an associated set of fields that can be written to between outputs to the terminal, when all the fields
