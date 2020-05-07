@@ -9,3 +9,4 @@ Logging = "56ddb016-857b-54e1-b83d-db4d58db5568"
 
 [compat]
 Formatting = "0.4"
+julia="1"
