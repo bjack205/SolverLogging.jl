@@ -1,136 +1,97 @@
+const DEFAULT_LEVEL = 1
+const DEFAULT_WIDTH = 10
+
+struct EntrySpec
+    fmt::String   # C-style format string
+    uid::UInt16   # unique ID, corresponds to the order the entry was added
+    lvl::UInt8    # verbosity level. 0 always prints.  Higher number -> lower priority
+    width::UInt8  # column width in characters
+end
+EntrySpec(fmt::String, eid, lvl=DEFAULT_LEVEL, width=DEFAULT_WIDTH) = EntrySpec(fmt, UInt16(eid), UInt8(lvl), UInt8(width))
+
+Base.@kwdef mutable struct LoggerOpts
+    curlevel::UInt8 = DEFAULT_LEVEL
+end
 
 struct Logger
-    fmt::Dict{String,Tuple{String,UInt16}}
+    fmt::Dict{String,EntrySpec}
     fmtfun::Dict{String,Function}
-    idx::Vector{UInt16}
+    idx::Vector{Int16}
     data::Vector{String}
     defaults::Dict{DataType,String}
+    opts::LoggerOpts
 end
-function Logger()
-    fmt = Dict{String,Tuple{String,UInt32}}()
+function Logger(; opts...)
+    fmt = Dict{String,EntrySpec}()
     fmtfun = Dict{String,Function}()
     idx = UInt16[]
     data = String[]
     defaults = _default_formats()
-    Logger(fmt, fmtfun, idx, data, defaults)
+    Logger(fmt, fmtfun, idx, data, defaults, LoggerOpts(; opts...))
 end
 
-function _log(log::Logger, name::String, val)
+function _log!(log::Logger, name::String, val)
     if haskey(log.fmt, name)
-        fmt,fid = log.fmt[name]
-        idx = log.idx[fid]
-        fun = log.fmtfun[fmt]
-        log.data[idx] = log.fmtfun[fmt](val)
+        espec = log.fmt[name]
+        if espec.lvl <= log.opts.curlevel
+            idx = log.idx[espec.uid]
+            fun = log.fmtfun[espec.fmt]
+            log.data[idx] = rpad(log.fmtfun[espec.fmt](val), espec.width)
+            if length(log.data[idx]) > espec.width
+                @warn "Entry for $name ($(log.data[idx])) is longer than field width ($(espec.width)). Alignment may be affected. Try increasing the field width."
+            end
+        end
+        return nothing
     end
 end
 
-function newfield(log::Logger, name::String, ::Type{T}; 
-        fmt::String=default_format(log, T), index::Integer=-1) where T
+function setlevel!(log::Logger, lvl)
+    prevlvl = log.opts.curlevel
+    log.opts.curlevel = lvl
 
-    # Check if index is valid
-    index == 0 && error("Index can't be zero. Must be positive or negative")
-    if length(log.data) == 0 && abs(index) == 1 
-        index = 1
-    elseif index < 0 
-        if index >= -length(log.data)
-            index = length(log.data) + index + 2
-        else
-            error("Invalid index. Negative indices must be greater than $(-length(log.data))")
-        end
-    elseif index > length(log.data)
-        error("Invalid index. Must be less than $(length(log.data))")
-    end
-
-    # Check if the field already exists
-    if haskey(log.fmt, name)
-        index -= 1
-        fmt0,fid = log.fmt[name]
-        oldindex = log.idx[fid]
-
-        # Shift data 
-        if oldindex != index
-            shiftswap!(log.data, index, oldindex)
-            shiftidx!(log.idx,  fid, index) 
-        end
-
-        if fmt != fmt0
-            log.fmt[name] = (fmt,fid)
-        end
-    else
-        # Insert new field
-        fid = length(log.idx) + 1
-        insert!(log.data, index, "")
-        push!(log.idx, fid)
-        shiftidx!(log.idx, fid, index)
-
-        # Set field format and index
-        log.fmt[name] = (fmt, fid)
-        if !haskey(log.fmtfun, fmt)
-            log.fmtfun[fmt] = generate_formatter(fmt)
+    # Reset all levels that are no longer active
+    for (k,v) in pairs(log.fmt)
+        idx = log.idx[v.uid]
+        if v.lvl > lvl
+            log.data[idx] = ""
         end
     end
-    return 
+    return prevlvl
 end
 
-@inline getidx(log::Logger, name::String) = log.idx[log.fmt[name][2]]
-
-function shiftswap!(a, inew, iold)
-    if inew != iold
-        v = a[iold]
-        deleteat!(a, iold)
-        insert!(a, inew, v)
-    end
-    return a
+function printheader(log::Logger)
+    header = formheader(log)
+    printstyled(header, bold=true, color=:blue)
+    println()
+    printstyled(repeat("—",length(header)), bold=true, color=:blue)
 end
 
-"""
-Set idx[fid] = inew. After update, 
-"""
-function shiftidx!(idx, fid, inew) 
-    iold = idx[fid]
-    ilo = min(iold,inew)
-    ihi = max(iold,inew)
-    s = -sign(inew - iold)
-    for j = 1:length(idx)
-        if ilo <= idx[j] <= ihi
-            idx[j] += s
+function formheader(log::Logger)
+    names = fill("", length(log.idx))
+    for (k,v) in pairs(log.fmt)
+        idx = log.idx[v.uid]
+        if v.lvl <= log.opts.curlevel
+            names[idx] = rpad(k, v.width)
         end
     end
-    idx[fid] = inew
-    return idx
-end
-
-
-function default_format(log::Logger, ::Type{T}) where T
-    _getformat(log.defaults, T)
-end
-
-function set_default_format(log::Logger, ::Type{T}, fmt::String) where T
-    log.defaults[T] = fmt
-end
-
-function _default_formats()
-    Dict(
-        AbstractFloat => "%3.2e",
-        AbstractString => "%s",
-        Integer => "%4d"
-    )
-end
-
-function _getformat(fmt::Dict, ::Type{T}) where T
-    if haskey(fmt, T) 
-        return fmt[T]
-    else
-        return _newdefault(fmt, T)
+    header = ""
+    for name in names
+        header *= name
     end
+    return header 
 end
 
-function _newdefault(fmt::Dict, ::Type{T}) where T
-    Tsuper = Any 
-    for (k,v) in pairs(fmt)
-        if (T <: k) && (k <: Tsuper)
-            Tsuper = k
-        end
-    end
-    fmt[T] = fmt[Tsuper]
+function printrow(log::Logger)
+    row = formrow(log)
+    println(row)
 end
+
+function formrow(log::Logger)
+    row = "" 
+    for v in log.data
+        row *= v
+    end
+    return row 
+end
+
+@inline getidx(log::Logger, name::String) = log.idx[log.fmt[name].uid]
