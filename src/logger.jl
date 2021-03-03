@@ -11,6 +11,10 @@ EntrySpec(fmt::String, eid, lvl=DEFAULT_LEVEL, width=DEFAULT_WIDTH) = EntrySpec(
 
 Base.@kwdef mutable struct LoggerOpts
     curlevel::UInt8 = DEFAULT_LEVEL
+    freq::UInt16 = 10                 # how often header prints
+    _count::UInt16 = 0                # internal counter
+    headerstyle::Crayon = crayon"bold blue"
+    linechar::Char = '—'
 end
 
 struct Logger
@@ -29,6 +33,31 @@ function Logger(; opts...)
     defaults = _default_formats()
     Logger(fmt, fmtfun, idx, data, defaults, LoggerOpts(; opts...))
 end
+
+function _default_formats()
+    Dict(
+        AbstractFloat => "%.2e",
+        AbstractString => "%s",
+        Integer => "%d"
+    )
+end
+
+const DEFAULT_LOGGER = Logger()
+
+function Base.empty!(log::Logger)
+    empty!(log.fmt)
+    empty!(log.fmtfun)
+    empty!(log.idx) 
+    empty!(log.data) 
+    empty!(log.defaults) 
+    merge!(log.defaults, _default_formats()) 
+    return log
+end
+
+resetcount!(log::Logger) = log.opts._count = 0
+resetcount!() = resetcount!(DEFAULT_LOGGER)
+resetlogger!(log::Logger) = begin empty!(log); resetcount!(log) end
+resetlogger!() = resetlogger!(DEFAULT_LOGGER)
 
 function _log!(log::Logger, name::String, val)
     if haskey(log.fmt, name)
@@ -61,10 +90,11 @@ end
 
 function printheader(log::Logger)
     header = formheader(log)
-    printstyled(header, bold=true, color=:blue)
-    println()
-    printstyled(repeat("—",length(header)), bold=true, color=:blue)
+    println(log.opts.headerstyle(header))
+    println(log.opts.headerstyle(repeat(log.opts.linechar, length(header))))
+    return header
 end
+printheader() = printheader(DEFAULT_LOGGER)
 
 function formheader(log::Logger)
     names = fill("", length(log.idx))
@@ -84,7 +114,10 @@ end
 function printrow(log::Logger)
     row = formrow(log)
     println(row)
+    log.opts._count += 1
+    return row
 end
+printrow() = printrow(DEFAULT_LOGGER)
 
 function formrow(log::Logger)
     row = "" 
@@ -93,5 +126,15 @@ function formrow(log::Logger)
     end
     return row 
 end
+
+function printlog(log::Logger)
+    cnt, freq = log.opts._count, log.opts.freq
+    if cnt % freq == 0
+        printheader(log)
+        resetcount!(log)
+    end
+    printrow(log)
+end
+printlog() = printlog(DEFAULT_LOGGER)
 
 @inline getidx(log::Logger, name::String) = log.idx[log.fmt[name].uid]

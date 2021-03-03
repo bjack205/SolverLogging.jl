@@ -1,3 +1,4 @@
+
 function setentry(log::Logger, name::String, ::Type{T}=Float64; 
         fmt::String=default_format(log, name, T), 
         index::Integer=default_index(log, name), 
@@ -76,9 +77,11 @@ function default_width(log::Logger, name::String, fmt::String)::UInt8
         width = getwidth(fmt)
         if width <= 0
             width = DEFAULT_WIDTH
+        else
+            width += 1
         end
     end
-    return UInt8(max(length(name)+1, width))
+    return UInt8(max(length(name) + 1, width))
 end
 
 # Default Formatting
@@ -92,14 +95,6 @@ default_format(log::Logger, ::Type{T}) where T = _getformat(log.defaults, T)
 
 function set_default_format(log::Logger, ::Type{T}, fmt::String) where T
     log.defaults[T] = fmt
-end
-
-function _default_formats()
-    Dict(
-        AbstractFloat => "%3.2e",
-        AbstractString => "%s",
-        Integer => "%4d"
-    )
 end
 
 function _getformat(fmt::Dict, ::Type{T}) where T
