@@ -1,7 +1,7 @@
 name = "SolverLogging"
 uuid = "c2e08473-88be-4f39-9d3c-afcdb6e3aeb8"
 authors = ["Brian Jackson <bjack205@gmail.com>"]
-version = "0.1.0"
+version = "0.2.0"
 
 [deps]
 Crayons = "a8cc5b0e-0ffa-5ad4-8c14-923d3ee1735f"
