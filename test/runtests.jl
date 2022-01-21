@@ -1,6 +1,11 @@
-using Test
 using SolverLogging
+using Test
 
-@testset "Logging" begin
-    include("logger_tests.jl")
+@testset "Basics" begin
+    include("basic.jl")
+    include("utils.jl")
+end
+
+@testset "Macros" begin
+    include("macros.jl")
 end
