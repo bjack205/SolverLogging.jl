@@ -30,9 +30,13 @@ from previous levels.
 
 # Constructor
 
-    SolverLogger.Logger(; opts...)
+    SolverLogger.Logger(io=stdout; opts...)
+    SolverLogger.Logger(filename; opts...)
 
-Where `opts` are one of the following keyword arguments:
+The constructor can take either an `IO` object or a filename, in which case it will 
+be opened with write permissions, replacing any existing contents.
+
+The keyword arguments `opts` are one of the following:
 
 * `curlevel` Current verbosity level of the solver. A non-negative integer.
 * `freq` A non-negative integer specifying how often the header row should be printed.
@@ -78,7 +82,7 @@ support omitting the logger, in which case the default logger stored in the `Sol
 module is used.
 """
 struct Logger
-    # io::IO
+    io::IO
     fmt::Dict{String,EntrySpec}  # Collection of entry specifications. UID for each entry is automatically assigned
     fmtfun::Dict{String,Function}
     idx::Vector{Int16}  # determines column order. idx[id] gives the column for entry with id.
@@ -87,16 +91,16 @@ struct Logger
     defaults::Dict{DataType,String}
     opts::LoggerOpts
 end
-function Logger(io::IO=Main.stdout; opts...)
+function Logger(io::IO=Base.stdout; opts...)
     fmt = Dict{String,EntrySpec}()
     fmtfun = Dict{String,Function}()
     idx = UInt16[]
     data = String[]
     crayons = Crayon[]
     defaults = _default_formats()
-    Logger(fmt, fmtfun, idx, data, crayons, defaults, LoggerOpts(; opts...))
+    Logger(io, fmt, fmtfun, idx, data, crayons, defaults, LoggerOpts(; opts...))
 end
-# Logger(filename::AbstractString; kwargs...) = Logger(open(filename, "w"); kwargs...)
+Logger(filename::AbstractString; kwargs...) = Logger(open(filename, "w"); kwargs...)
 
 isenabled(log::Logger) = log.opts.enable
 enable(log::Logger) = log.opts.enable = true
@@ -201,13 +205,7 @@ This value can be set to the null character `\0` if this line should be excluded
 """
 function printheader(log::Logger)
     isenabled(log) || return 
-    # _printheader(log.io, log)
-    io = Main.stdout 
-    header = formheader(log)
-    println(io, log.opts.headerstyle(header))
-    if log.opts.linechar != '\0'
-        println(io, log.opts.headerstyle(repeat(log.opts.linechar, length(header))))
-    end
+    _printheader(log.io, log)
     return nothing 
 end
 function _printheader(io::IOStream, log::Logger)
@@ -219,9 +217,9 @@ function _printheader(io::IOStream, log::Logger)
 end
 function _printheader(io::IO, log::Logger)
     header = formheader(log)
-    println(io, log.opts.headerstyle(header))
+    println(log.opts.headerstyle(header))
     if log.opts.linechar != '\0'
-        println(io, log.opts.headerstyle(repeat(log.opts.linechar, length(header))))
+        println(log.opts.headerstyle(repeat(log.opts.linechar, length(header))))
     end
 end
 
@@ -254,7 +252,7 @@ Only prints the data for the current verbosity level.
 """
 function printrow(log::Logger)
     isenabled(log) || return 
-    _printrow(Main.stdout, log)
+    _printrow(log.io, log)
     log.opts._count += 1
     return nothing
 end
@@ -263,12 +261,14 @@ function _printrow(io::IOStream, log::Logger)
         print(io,v)
     end
     println(io)
+    flush(io)
 end
 function _printrow(io::IO, log::Logger)
     for (v,c) in zip(log.crayons, log.data)
-        print(io,c,v)
+        print(c,v)
     end
-    println(io)
+    println()
+    flush(stdout)
 end
 
 """

@@ -1,4 +1,5 @@
 using SolverLogging
+using Crayons
 using Test
 
 ## API
@@ -63,7 +64,7 @@ lg.opts.linechar = 0
 lg.opts.headerstyle = crayon"yellow"
 iter = 1
 for i = 1:10
-    iter = i
+    local iter = i
     @log lg iter
     @log lg "cost" log(10*i)
     @log lg "tol" exp(-i)
@@ -71,23 +72,34 @@ for i = 1:10
 end
 
 ## Test output to a file
-# filename = joinpath(@__DIR__, "log.out")
-# lg = SolverLogging.Logger(filename)
-# setentry(lg, "iter", Int)
-# setentry(lg, "cost", Float64)
-# setentry(lg, "tol", Float64, level=2)
-# lg.opts.freq = 5
-# lg.opts.linechar = 0
-# iter = 1
-# for i = 1:10
-#     iter = i
-#     @log lg iter
-#     @log lg "cost" log(10*i)
-#     @log lg "tol" exp(-i)
-#     printlog(lg)
-# end
-# close(lg.io)
-# lg.io isa IOStream
+filename = joinpath(@__DIR__, "log.out")
+lg = SolverLogging.Logger(filename)
+setentry(lg, "iter", Int)
+setentry(lg, "cost", Float64)
+setentry(lg, "tol", Float64, level=2)
+lg.opts.freq = 5
+lg.opts.linechar = 0
+iter = 1
+for i = 1:10
+    iter = i
+    @log lg iter
+    @log lg "cost" log(10*i)
+    @log lg "tol" exp(-i)
+    printlog(lg)
+end
+flush(lg.io)
+@test lg.io isa IOStream
+lines = readlines(filename)
+@test length(lines) == 12
+for i in (1,7)
+    @test occursin("iter", lines[i])
+    @test occursin("cost", lines[i])
+    @test !occursin("tol", lines[i])
+end
+for i = 2:6
+    @test occursin("$(i-1)", lines[i])
+end
+rm(filename)
 
 # cc = ConditionalCrayon(crayon"red", crayon"green", crayon"blue", 0, 10)
 # println(cc(0))
