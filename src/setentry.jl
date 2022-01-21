@@ -10,7 +10,7 @@ reasonable formatting defaults and must be included. The keyword arguments contr
 the behavior/formatting of the field:
 * `fmt` A C-style format string used to control the format of the field
 * `index` Column for the entry in the output. Negative numbers insert from the end.
-* `lvl` Verbosity level for the entry. A higher level will be printed less often.
+* `level` Verbosity level for the entry. A higher level will be printed less often.
         Level 0 will always be printed, unless the logger is disabled. Prefer to use 
         a minimum level of 1.
 * `width` Width of the column. Data is left-aligned to this width.
@@ -24,7 +24,7 @@ with the new setting.
 function setentry(log::Logger, name::String, type::Type{T}=Nothing; 
         fmt::String=default_format(log, name, T), 
         index::Integer=default_index(log, name), 
-        lvl=default_level(log, name),
+        level=default_level(log, name),
         width::Integer=default_width(log, name, fmt),
         ccrayon=nothing
     ) where T
@@ -62,9 +62,9 @@ function setentry(log::Logger, name::String, type::Type{T}=Nothing;
             ccrayon = espec.ccrayon
         end
 
-        if fmt != espec.fmt || lvl != espec.lvl || width != espec.width || 
+        if fmt != espec.fmt || level != espec.level || width != espec.width || 
              T != espec.type || ccrayon != espec.ccrayon
-            log.fmt[name] = EntrySpec(T, fmt, fid, lvl, width, ccrayon)
+            log.fmt[name] = EntrySpec(T, fmt, fid, level, width, ccrayon)
         end
     else
         @assert type != Nothing "Must specify type for a new field"
@@ -81,7 +81,7 @@ function setentry(log::Logger, name::String, type::Type{T}=Nothing;
         end
 
         # Set field format and index
-        log.fmt[name] = EntrySpec(T, fmt, fid, lvl, width, ccrayon)
+        log.fmt[name] = EntrySpec(T, fmt, fid, level, width, ccrayon)
     end
 
     # Add formatter if it doesn't exist
@@ -101,7 +101,7 @@ end
 
 function default_level(log::Logger, name::String)
     if haskey(log.fmt, name)
-        return log.fmt[name].lvl::UInt8
+        return log.fmt[name].level::UInt8
     end
     UInt8(DEFAULT_LEVEL)
 end

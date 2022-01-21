@@ -95,7 +95,7 @@ SolverLogging.setentry(lg, "ϕ", Int32, index=-3, fmt="%5d")
 @test lg.idx == [1,3,4,2]
 
 # Change level
-SolverLogging.setentry(lg, "ϕ", Int32, lvl=2)
+SolverLogging.setentry(lg, "ϕ", Int32, level=2)
 @test lg.fmt["ϕ"] == EntrySpec(Int32,"%5d", 4, 2, 10)
 
 # Change Width 

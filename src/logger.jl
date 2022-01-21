@@ -5,12 +5,12 @@ struct EntrySpec
     type::DataType  
     fmt::String     # C-style format string
     uid::UInt16     # unique ID, corresponds to the order the entry was added
-    lvl::UInt8      # verbosity level. 0 always prints.  Higher number -> lower priority
+    level::UInt8      # verbosity level. 0 always prints.  Higher number -> lower priority
     width::UInt8    # column width in characters
     ccrayon::ConditionalCrayon
 end
-EntrySpec(T::DataType, fmt::String, eid, lvl=DEFAULT_LEVEL, width=DEFAULT_WIDTH; 
-    ccrayon=ConditionalCrayon()) = EntrySpec(T, fmt, UInt16(eid), UInt8(lvl), UInt8(width), ccrayon)
+EntrySpec(T::DataType, fmt::String, eid, level=DEFAULT_LEVEL, width=DEFAULT_WIDTH; 
+    ccrayon=ConditionalCrayon()) = EntrySpec(T, fmt, UInt16(eid), UInt8(level), UInt8(width), ccrayon)
 
 Base.@kwdef mutable struct LoggerOpts
     curlevel::UInt8 = DEFAULT_LEVEL
@@ -78,6 +78,7 @@ support omitting the logger, in which case the default logger stored in the `Sol
 module is used.
 """
 struct Logger
+    # io::IO
     fmt::Dict{String,EntrySpec}  # Collection of entry specifications. UID for each entry is automatically assigned
     fmtfun::Dict{String,Function}
     idx::Vector{Int16}  # determines column order. idx[id] gives the column for entry with id.
@@ -86,7 +87,7 @@ struct Logger
     defaults::Dict{DataType,String}
     opts::LoggerOpts
 end
-function Logger(; opts...)
+function Logger(io::IO=Main.stdout; opts...)
     fmt = Dict{String,EntrySpec}()
     fmtfun = Dict{String,Function}()
     idx = UInt16[]
@@ -95,6 +96,7 @@ function Logger(; opts...)
     defaults = _default_formats()
     Logger(fmt, fmtfun, idx, data, crayons, defaults, LoggerOpts(; opts...))
 end
+# Logger(filename::AbstractString; kwargs...) = Logger(open(filename, "w"); kwargs...)
 
 isenabled(log::Logger) = log.opts.enable
 enable(log::Logger) = log.opts.enable = true
@@ -154,7 +156,7 @@ and calculates the color using the [`ConditionalCrayon`](@ref) for the entry.
 function _log!(log::Logger, name::String, val)
     if haskey(log.fmt, name)
         espec = log.fmt[name]
-        if espec.lvl <= log.opts.curlevel
+        if espec.level <= log.opts.curlevel
             idx = log.idx[espec.uid]
             fun = log.fmtfun[espec.fmt]
             crayon = espec.ccrayon(val)
@@ -169,19 +171,19 @@ function _log!(log::Logger, name::String, val)
 end
 
 """
-    setlevel!(logger, lvl)
+    setlevel!(logger, level)
 
 Set the verbosity level for the logger. High levels prints more information.
 Returns the previous verbosity level.
 """
-function setlevel!(log::Logger, lvl)
+function setlevel!(log::Logger, level)
     prevlvl = log.opts.curlevel
-    log.opts.curlevel = lvl
+    log.opts.curlevel = level
 
     # Reset all levels that are no longer active
     for (k,v) in pairs(log.fmt)
         idx = log.idx[v.uid]
-        if v.lvl > lvl
+        if v.level > level
             log.data[idx] = ""
         end
     end
@@ -199,12 +201,28 @@ This value can be set to the null character `\0` if this line should be excluded
 """
 function printheader(log::Logger)
     isenabled(log) || return 
+    # _printheader(log.io, log)
+    io = Main.stdout 
     header = formheader(log)
-    println(log.opts.headerstyle(header))
-    if log.opts.linechar != 0
-        println(log.opts.headerstyle(repeat(log.opts.linechar, length(header))))
+    println(io, log.opts.headerstyle(header))
+    if log.opts.linechar != '\0'
+        println(io, log.opts.headerstyle(repeat(log.opts.linechar, length(header))))
     end
     return nothing 
+end
+function _printheader(io::IOStream, log::Logger)
+    header = formheader(log)
+    println(io, header)
+    if log.opts.linechar != '\0'
+        println(io, repeat(log.opts.linechar, length(header)))
+    end
+end
+function _printheader(io::IO, log::Logger)
+    header = formheader(log)
+    println(io, log.opts.headerstyle(header))
+    if log.opts.linechar != '\0'
+        println(io, log.opts.headerstyle(repeat(log.opts.linechar, length(header))))
+    end
 end
 
 """
@@ -216,7 +234,7 @@ function formheader(log::Logger)
     names = fill("", length(log.idx))
     for (k,v) in pairs(log.fmt)
         idx = log.idx[v.uid]
-        if v.lvl <= log.opts.curlevel
+        if v.level <= log.opts.curlevel
             names[idx] = rpad(k, v.width)
         end
     end
@@ -236,14 +254,21 @@ Only prints the data for the current verbosity level.
 """
 function printrow(log::Logger)
     isenabled(log) || return 
-    # row = formrow(log)
-    # println(row)
-    for (c,v) in zip(log.crayons,log.data)
-        print(c,v)
-    end
-    println()
+    _printrow(Main.stdout, log)
     log.opts._count += 1
     return nothing
+end
+function _printrow(io::IOStream, log::Logger)
+    for v in log.data
+        print(io,v)
+    end
+    println(io)
+end
+function _printrow(io::IO, log::Logger)
+    for (v,c) in zip(log.crayons, log.data)
+        print(io,c,v)
+    end
+    println(io)
 end
 
 """

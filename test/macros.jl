@@ -23,6 +23,8 @@ nm = "iter"
 @log "iter" 2a
 @log "cost" 10
 @log "ΔJ" 1e-3
+cost = 12.0
+@log cost 
 printheader()
 SolverLogging.formrow(lg)
 printrow()
@@ -42,13 +44,50 @@ for iter = 1:12
 end
 @test SolverLogging.isenabled()
 
-println("\nNothing should print after this:")
+println("\nNothing should print between this line...")
 SolverLogging.disable()
 SolverLogging.resetcount!()
 for iter = 1:12
     @log iter
     printlog()
 end
+println("...and this line")
+
+## Use a local logger
+lg = SolverLogging.Logger()
+setentry(lg, "iter", Int)
+setentry(lg, "cost", Float64)
+setentry(lg, "tol", Float64, level=2)
+lg.opts.freq = 5
+lg.opts.linechar = 0
+lg.opts.headerstyle = crayon"yellow"
+iter = 1
+for i = 1:10
+    iter = i
+    @log lg iter
+    @log lg "cost" log(10*i)
+    @log lg "tol" exp(-i)
+    printlog(lg)
+end
+
+## Test output to a file
+# filename = joinpath(@__DIR__, "log.out")
+# lg = SolverLogging.Logger(filename)
+# setentry(lg, "iter", Int)
+# setentry(lg, "cost", Float64)
+# setentry(lg, "tol", Float64, level=2)
+# lg.opts.freq = 5
+# lg.opts.linechar = 0
+# iter = 1
+# for i = 1:10
+#     iter = i
+#     @log lg iter
+#     @log lg "cost" log(10*i)
+#     @log lg "tol" exp(-i)
+#     printlog(lg)
+# end
+# close(lg.io)
+# lg.io isa IOStream
 
 # cc = ConditionalCrayon(crayon"red", crayon"green", crayon"blue", 0, 10)
 # println(cc(0))

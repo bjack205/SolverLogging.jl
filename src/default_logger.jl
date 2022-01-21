@@ -4,8 +4,8 @@ function setentry(name::String, ::Type{T}=Float64; kwargs...) where T
     return setentry(DEFAULT_LOGGER, name, T; kwargs...)
 end
 
-log_expr(name::String, ex) =_log_expr(DEFAULT_LOGGER, name, ex)
-log_expr(ex::Symbol) = log_expr(DEFAULT_LOGGER, ex)
+log_expr(name::String, ex) =_log_expr(:(SolverLogging.DEFAULT_LOGGER), name, ex)
+log_expr(ex::Symbol) = log_expr(:(SolverLogging.DEFAULT_LOGGER), ex)
 
 isenabled() = isenabled(DEFAULT_LOGGER)
 enable() = enable(DEFAULT_LOGGER)
