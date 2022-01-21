@@ -21,7 +21,7 @@ This method can also modify an existing entry, if `name` is already a field int 
 The `type` can be omitted in this case. Simply specify any of the keyword arguments 
 with the new setting.
 """
-function setentry(log::Logger, name::String, type::Type{T}=Nothing; 
+function setentry(log::Logger, name::String, type::Type{T}=Float64; 
         fmt::String=default_format(log, name, T), 
         index::Integer=default_index(log, name), 
         level=default_level(log, name),

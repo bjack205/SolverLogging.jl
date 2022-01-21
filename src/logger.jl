@@ -175,6 +175,14 @@ function _log!(log::Logger, name::String, val)
 end
 
 """
+    getlevel(logger)
+
+Gets the current verbosity level for the logger.
+"""
+getlevel(logger::Logger) = log.opts.curlevel
+
+
+"""
     setlevel!(logger, level)
 
 Set the verbosity level for the logger. High levels prints more information.
@@ -264,7 +272,7 @@ function _printrow(io::IOStream, log::Logger)
     flush(io)
 end
 function _printrow(io::IO, log::Logger)
-    for (v,c) in zip(log.crayons, log.data)
+    for (c,v) in zip(log.crayons, log.data)
         print(c,v)
     end
     println()
@@ -290,7 +298,7 @@ end
 Prints the data currently in the logger, automatically printing the header 
 at the frequency specified by `logger.opts.freq`.
 
-The period of the header can be reset using [`resetcount`](@ref).
+The period of the header can be reset using [`resetcount!`](@ref).
 """
 function printlog(log::Logger)
     cnt, freq = log.opts._count, log.opts.freq

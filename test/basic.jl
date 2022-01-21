@@ -78,8 +78,8 @@ entry = lg.fmt["alpha"]
 @test entry.ccrayon(0) == crayon"green"
 @test entry.ccrayon(11) == crayon"red"
 
-# Try adding new field without the type
-@test_throws AssertionError SolverLogging.setentry(lg, "ϕ")
+# # Try adding new field without the type
+# @test_throws AssertionError SolverLogging.setentry(lg, "ϕ")
 
 # Add to 2nd to last field
 SolverLogging.setentry(lg, "ϕ", Int32, index=-2)

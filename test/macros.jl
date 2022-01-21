@@ -20,9 +20,9 @@ setentry("info", String)
 lg = SolverLogging.DEFAULT_LOGGER
 
 a = 1+2
-nm = "iter"
-@log "iter" 2a
-@log "cost" 10
+itr = 1
+@log "iter" itr 
+@log "cost" 10a
 @log "ΔJ" 1e-3
 cost = 12.0
 @log cost 
@@ -101,6 +101,29 @@ for i = 2:6
 end
 rm(filename)
 
+## Test Condition formatting
+
+ccrayon_tol = ConditionalCrayon(1e-6,Inf, reverse=false)
+
+goodctrl = x->abs(x) < 1 
+badctrl = x->abs(x) > 10
+defcolor = crayon"208"  # the ANSI color for a dark orange. 
+ccrayon_control = ConditionalCrayon(badctrl, goodctrl, defaultcolor=defcolor)
+
+logger = SolverLogging.Logger()
+setentry(logger, "iter", Int, width=5)
+setentry(logger, "tol", Float64, ccrayon=ccrayon_tol)
+setentry(logger, "ctrl", Float64, fmt="%.1f", ccrayon=ccrayon_control)
+
+logger.fmt["iter"].ccrayon(10)
+for iter = 1:10
+    tol = exp10(-iter)
+    ctrl = 0.1*(iter-1)*iter^2
+    @log logger iter
+    @log logger tol
+    @log logger ctrl
+    printlog(logger)
+end
 # cc = ConditionalCrayon(crayon"red", crayon"green", crayon"blue", 0, 10)
 # println(cc(0))
 # typeof(cc(5))
