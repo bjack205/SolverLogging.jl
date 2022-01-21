@@ -39,7 +39,6 @@ lg.data[2] = "iter"
 SolverLogging.setentry(lg, "iter", Int, fmt="%3d", index=2)
 @test length(lg.data) == 2
 @test lg.data[2] == "iter"
-lg.idx
 @test length(keys(lg.fmt)) == 2
 @test lg.data == ["alpha","iter"]
 @test SolverLogging.getidx(lg, "iter") == 2
@@ -119,3 +118,11 @@ SolverLogging._log!(lg, "ϕ", 3)
 @test lg.data[2] == rpad("    3", 12)
 @test occursin("ϕ", SolverLogging.formheader(lg))
 @test length(SolverLogging.formrow(lg)) == 43 
+
+begin
+    SolverLogging.printheader(lg)
+    for i = 1:3
+        SolverLogging._log!(lg, "iter", i)
+        SolverLogging.printrow(lg)
+    end
+end

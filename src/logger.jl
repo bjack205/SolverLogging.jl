@@ -18,9 +18,9 @@ Base.@kwdef mutable struct LoggerOpts
 end
 
 struct Logger
-    fmt::Dict{String,EntrySpec}
+    fmt::Dict{String,EntrySpec}  # Collection of entry specifications. UID for each entry is automatically assigned
     fmtfun::Dict{String,Function}
-    idx::Vector{Int16}
+    idx::Vector{Int16}  # determines column order. idx[id] gives the column for entry with id.
     data::Vector{String}
     defaults::Dict{DataType,String}
     opts::LoggerOpts
@@ -74,6 +74,12 @@ function _log!(log::Logger, name::String, val)
     end
 end
 
+"""
+    setlevel!(logger, lvl)
+
+Set the verbosity level for the logger. High levels prints more information.
+Returns the previous verbosity level.
+"""
 function setlevel!(log::Logger, lvl)
     prevlvl = log.opts.curlevel
     log.opts.curlevel = lvl

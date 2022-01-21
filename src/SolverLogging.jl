@@ -7,6 +7,7 @@ include("utils.jl")
 include("logger.jl")
 include("setentry.jl")
 
+# Set entries in default logger
 function setentry(name::String, ::Type{T}=Float64; kwargs...) where T
     return setentry(DEFAULT_LOGGER, name, T; kwargs...)
 end
@@ -15,19 +16,19 @@ macro log(args...)
     return log_expr(args...)
 end
 
-function log_expr(name::String, ex)
-    return _log_expr(DEFAULT_LOGGER, name, ex)
-end
-
+# Use default logger
+log_expr(name::String, ex) =_log_expr(DEFAULT_LOGGER, name, ex)
 log_expr(ex::Symbol) = log_expr(DEFAULT_LOGGER, ex)
+
+# Use the symbol as the string name 
+# e.g. `@log α`` logs the value of α in the "α" field
 function log_expr(log::Logger, ex::Symbol)
     name = string(ex)
     _log_expr(log, name, ex)
 end
 
-function log_expr(log::Logger, name::String, ex)
-    return _log_expr(log, name, ex)
-end
+# Pass-through to actual function
+log_expr(log::Logger, name::String, ex) = _log_expr(log, name, ex)
 
 
 function _log_expr(log::Logger, name::String, expr)
