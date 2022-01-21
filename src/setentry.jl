@@ -34,8 +34,8 @@ function setentry(log::Logger, name::String, ::Type{T}=Float64;
             shiftidx!(log.idx,  fid, index) 
         end
 
-        if fmt != espec.fmt || lvl != espec.lvl || width != espec.width
-            log.fmt[name] = EntrySpec(fmt, fid, lvl, width)
+        if fmt != espec.fmt || lvl != espec.lvl || width != espec.width || T != espec.type
+            log.fmt[name] = EntrySpec(T, fmt, fid, lvl, width)
         end
     else
         # Insert new field
@@ -45,7 +45,7 @@ function setentry(log::Logger, name::String, ::Type{T}=Float64;
         shiftidx!(log.idx, fid, index)
 
         # Set field format and index
-        log.fmt[name] = EntrySpec(fmt, fid, lvl, width)
+        log.fmt[name] = EntrySpec(T, fmt, fid, lvl, width)
     end
 
     # Add formatter if it doesn't exist

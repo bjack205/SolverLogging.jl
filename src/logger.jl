@@ -2,12 +2,13 @@ const DEFAULT_LEVEL = 1
 const DEFAULT_WIDTH = 10
 
 struct EntrySpec
-    fmt::String   # C-style format string
-    uid::UInt16   # unique ID, corresponds to the order the entry was added
-    lvl::UInt8    # verbosity level. 0 always prints.  Higher number -> lower priority
-    width::UInt8  # column width in characters
+    type::DataType  
+    fmt::String     # C-style format string
+    uid::UInt16     # unique ID, corresponds to the order the entry was added
+    lvl::UInt8      # verbosity level. 0 always prints.  Higher number -> lower priority
+    width::UInt8    # column width in characters
 end
-EntrySpec(fmt::String, eid, lvl=DEFAULT_LEVEL, width=DEFAULT_WIDTH) = EntrySpec(fmt, UInt16(eid), UInt8(lvl), UInt8(width))
+EntrySpec(T::DataType, fmt::String, eid, lvl=DEFAULT_LEVEL, width=DEFAULT_WIDTH) = EntrySpec(T, fmt, UInt16(eid), UInt8(lvl), UInt8(width))
 
 Base.@kwdef mutable struct LoggerOpts
     curlevel::UInt8 = DEFAULT_LEVEL
@@ -118,10 +119,14 @@ function formheader(log::Logger)
 end
 
 function printrow(log::Logger)
-    row = formrow(log)
-    println(row)
+    # row = formrow(log)
+    # println(row)
+    for v in log.data
+        print(v)
+    end
+    println()
     log.opts._count += 1
-    return row
+    return nothing
 end
 printrow() = printrow(DEFAULT_LOGGER)
 

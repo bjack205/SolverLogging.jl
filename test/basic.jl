@@ -23,14 +23,14 @@ SolverLogging.set_default_format(lg, Int, "%3d")
 @test length(lg.data) == 0
 SolverLogging.setentry(lg, "alpha", Float64)
 @test length(lg.data) == 1
-@test lg.fmt["alpha"] == EntrySpec(def[AbstractFloat],1, 1, SolverLogging.DEFAULT_WIDTH)
+@test lg.fmt["alpha"] == EntrySpec(Float64, def[AbstractFloat],1, 1, SolverLogging.DEFAULT_WIDTH)
 @test lg.idx[1] == 1
 @test SolverLogging.getidx(lg, "alpha") == 1
 lg.data[1] = "alpha"
 
 # Add an integer entry
 SolverLogging.setentry(lg, "iter", Int, fmt="%10d")
-@test lg.fmt["iter"] == EntrySpec("%10d",2,1,11)
+@test lg.fmt["iter"] == EntrySpec(Int,"%10d",2,1,11)
 @test length(lg.data) == 2
 @test SolverLogging.getidx(lg, "iter") == 2
 lg.data[2] = "iter"
@@ -45,7 +45,7 @@ SolverLogging.setentry(lg, "iter", Int, fmt="%3d", index=2)
 
 # New string field
 SolverLogging.setentry(lg, "info", String, index=1)
-@test lg.fmt["info"] == EntrySpec("%s",3)
+@test lg.fmt["info"] == EntrySpec(String,"%s",3)
 @test SolverLogging.getidx(lg, "info") == 1
 @test SolverLogging.getidx(lg, "alpha") == 2
 @test SolverLogging.getidx(lg, "iter") == 3
@@ -55,30 +55,30 @@ lg.data[1] = "info"
 # Move an existing field (1 to 3)
 
 SolverLogging.setentry(lg, "info", String, index=-1)
-@test lg.fmt["info"] == EntrySpec("%s",3)
+@test lg.fmt["info"] == EntrySpec(String,"%s",3)
 @test lg.data == ["alpha","iter","info"]
 @test lg.idx == [1,2,3]
 
 # Add to 2nd to last field
 SolverLogging.setentry(lg, "ϕ", Int32, index=-2)
-@test lg.fmt["ϕ"] == EntrySpec(def[Integer],4,1, 10) 
+@test lg.fmt["ϕ"] == EntrySpec(Int32,def[Integer],4,1, 10) 
 lg.data[3] = "phi"
 @test lg.data == ["alpha","iter","phi","info"]
 @test lg.idx == [1,2,4,3]
 
 # move and use new format (3 to 2)
 SolverLogging.setentry(lg, "ϕ", Int32, index=-3, fmt="%5d")
-@test lg.fmt["ϕ"] == EntrySpec("%5d", 4, 1, 10)
+@test lg.fmt["ϕ"] == EntrySpec(Int32,"%5d", 4, 1, 10)
 @test lg.data == ["alpha","phi","iter","info"]
 @test lg.idx == [1,3,4,2]
 
 # Change level
 SolverLogging.setentry(lg, "ϕ", Int32, lvl=2)
-@test lg.fmt["ϕ"] == EntrySpec("%5d", 4, 2, 10)
+@test lg.fmt["ϕ"] == EntrySpec(Int32,"%5d", 4, 2, 10)
 
 # Change verbosity
 SolverLogging.setentry(lg, "ϕ", Int32, width=12) 
-@test lg.fmt["ϕ"] == EntrySpec("%5d", 4, 2, 12)
+@test lg.fmt["ϕ"] == EntrySpec(Int32,"%5d", 4, 2, 12)
 
 
 @test (@allocated SolverLogging.setentry(lg, "ϕ", Int32, index=-3, fmt="%5d")) == 0
