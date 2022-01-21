@@ -4,6 +4,7 @@ using Formatting
 using Crayons
 
 include("utils.jl")
+include("conditional_crayon.jl")
 include("logger.jl")
 include("setentry.jl")
 
@@ -47,7 +48,8 @@ export
     @log,
     printheader,
     printrow,
-    printlog
+    printlog,
+    ConditionalCrayon
 
 
 end # module

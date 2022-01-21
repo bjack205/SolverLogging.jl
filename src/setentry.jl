@@ -1,9 +1,10 @@
 
-function setentry(log::Logger, name::String, ::Type{T}=Float64; 
+function setentry(log::Logger, name::String, type::Type{T}=Nothing; 
         fmt::String=default_format(log, name, T), 
         index::Integer=default_index(log, name), 
         lvl=default_level(log, name),
-        width::Integer=default_width(log, name, fmt)
+        width::Integer=default_width(log, name, fmt),
+        ccrayon=nothing
     ) where T
     @assert width > 0 "Field width must be positive"
 
@@ -31,21 +32,34 @@ function setentry(log::Logger, name::String, ::Type{T}=Float64;
         # Shift data 
         if oldindex != index
             shiftswap!(log.data, index, oldindex)
+            shiftswap!(log.crayons, index, oldindex)
             shiftidx!(log.idx,  fid, index) 
         end
 
-        if fmt != espec.fmt || lvl != espec.lvl || width != espec.width || T != espec.type
-            log.fmt[name] = EntrySpec(T, fmt, fid, lvl, width)
+        if isnothing(ccrayon)
+            ccrayon = espec.ccrayon
+        end
+
+        if fmt != espec.fmt || lvl != espec.lvl || width != espec.width || 
+             T != espec.type || ccrayon != espec.ccrayon
+            log.fmt[name] = EntrySpec(T, fmt, fid, lvl, width, ccrayon)
         end
     else
+        @assert type != Nothing "Must specify type for a new field"
+
         # Insert new field
         fid = length(log.idx) + 1
         insert!(log.data, index, "")
+        insert!(log.crayons, index, Crayon(reset=true))
         push!(log.idx, fid)
         shiftidx!(log.idx, fid, index)
 
+        if isnothing(ccrayon)
+            ccrayon = ConditionalCrayon()
+        end
+
         # Set field format and index
-        log.fmt[name] = EntrySpec(T, fmt, fid, lvl, width)
+        log.fmt[name] = EntrySpec(T, fmt, fid, lvl, width, ccrayon)
     end
 
     # Add formatter if it doesn't exist

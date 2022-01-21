@@ -7,8 +7,10 @@ struct EntrySpec
     uid::UInt16     # unique ID, corresponds to the order the entry was added
     lvl::UInt8      # verbosity level. 0 always prints.  Higher number -> lower priority
     width::UInt8    # column width in characters
+    ccrayon::ConditionalCrayon
 end
-EntrySpec(T::DataType, fmt::String, eid, lvl=DEFAULT_LEVEL, width=DEFAULT_WIDTH) = EntrySpec(T, fmt, UInt16(eid), UInt8(lvl), UInt8(width))
+EntrySpec(T::DataType, fmt::String, eid, lvl=DEFAULT_LEVEL, width=DEFAULT_WIDTH; 
+    ccrayon=ConditionalCrayon()) = EntrySpec(T, fmt, UInt16(eid), UInt8(lvl), UInt8(width), ccrayon)
 
 Base.@kwdef mutable struct LoggerOpts
     curlevel::UInt8 = DEFAULT_LEVEL
@@ -23,6 +25,7 @@ struct Logger
     fmtfun::Dict{String,Function}
     idx::Vector{Int16}  # determines column order. idx[id] gives the column for entry with id.
     data::Vector{String}
+    crayons::Vector{Crayon}
     defaults::Dict{DataType,String}
     opts::LoggerOpts
 end
@@ -31,15 +34,17 @@ function Logger(; opts...)
     fmtfun = Dict{String,Function}()
     idx = UInt16[]
     data = String[]
+    crayons = Crayon[]
     defaults = _default_formats()
-    Logger(fmt, fmtfun, idx, data, defaults, LoggerOpts(; opts...))
+    Logger(fmt, fmtfun, idx, data, crayons, defaults, LoggerOpts(; opts...))
 end
 
 function _default_formats()
     Dict(
         AbstractFloat => "%.2e",
         AbstractString => "%s",
-        Integer => "%d"
+        Integer => "%d",
+        Any => "%s"   # default to string printing
     )
 end
 
@@ -66,7 +71,9 @@ function _log!(log::Logger, name::String, val)
         if espec.lvl <= log.opts.curlevel
             idx = log.idx[espec.uid]
             fun = log.fmtfun[espec.fmt]
+            crayon = espec.ccrayon(val)
             log.data[idx] = rpad(log.fmtfun[espec.fmt](val), espec.width)
+            log.crayons[idx] = crayon
             if length(log.data[idx]) > espec.width
                 @warn "Entry for $name ($(log.data[idx])) is longer than field width ($(espec.width)). Alignment may be affected. Try increasing the field width."
             end
@@ -121,8 +128,8 @@ end
 function printrow(log::Logger)
     # row = formrow(log)
     # println(row)
-    for v in log.data
-        print(v)
+    for (c,v) in zip(log.crayons,log.data)
+        print(c,v)
     end
     println()
     log.opts._count += 1
