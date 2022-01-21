@@ -1,4 +1,26 @@
 
+"""
+    setentry(logger, name::String, type; kwargs...)
+
+Used to add a new entry/field or modify an existing entry/field in the `logger`.
+
+# Adding a new entry
+Specify a unique `name` to add a new entry to the logger. The `type` is used to provide 
+reasonable formatting defaults and must be included. The keyword arguments control 
+the behavior/formatting of the field:
+* `fmt` A C-style format string used to control the format of the field
+* `index` Column for the entry in the output. Negative numbers insert from the end.
+* `lvl` Verbosity level for the entry. A higher level will be printed less often.
+        Level 0 will always be printed, unless the logger is disabled. Prefer to use 
+        a minimum level of 1.
+* `width` Width of the column. Data is left-aligned to this width.
+* `ccrayon` A [`ConditionalCrayon`](@ref) for conditional formatting.
+
+# Modified an existing entry
+This method can also modify an existing entry, if `name` is already a field int the logger.
+The `type` can be omitted in this case. Simply specify any of the keyword arguments 
+with the new setting.
+"""
 function setentry(log::Logger, name::String, type::Type{T}=Nothing; 
         fmt::String=default_format(log, name, T), 
         index::Integer=default_index(log, name), 
@@ -107,6 +129,21 @@ function default_format(log::Logger, name::String, ::Type{T}) where T
 end
 default_format(log::Logger, ::Type{T}) where T = _getformat(log.defaults, T)
 
+"""
+    set_default_format(logger, type, fmt)
+
+Set the default format for entries type type is a sub-type of `type`. For example:
+
+    set_default_format(logger, AbstractFloat, "%0.2d")
+
+Will print all floating point fields with 2 decimal places. The most format for the 
+type closest to the default is always chosen, such that if we specified 
+
+    set_default_format(logger, Float64, "%0.1d")
+
+This would override the previous behavior for `Float64`s.
+
+"""
 function set_default_format(log::Logger, ::Type{T}, fmt::String) where T
     log.defaults[T] = fmt
 end

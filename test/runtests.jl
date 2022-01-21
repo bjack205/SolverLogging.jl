@@ -5,3 +5,7 @@ using Test
     include("basic.jl")
     include("utils.jl")
 end
+
+@testset "Macros" begin
+    include("macros.jl")
+end
