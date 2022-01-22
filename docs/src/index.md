@@ -21,7 +21,7 @@ the data from an iteration of the solver. The key features of this package are:
 To use the default logger provided by the package, start by specifying the fields
 you want to log:
 
-```@example quickstart; continued=true
+```
 using SolverLogging
 SolverLogging.resetlogger!()  # good idea to always reset the global logger
 setentry("iter", Int, width=5)
@@ -33,12 +33,12 @@ setentry("tol", level=2)    # sets it to verbosity level 2  (prints less often)
 ```
 After specifying the data we want to log, we log the data using the [`@log`](@ref)
 macro:
-```@example quickstart; continued=true
+```
 @log "iter" 1
 @log "cost" 10.2
 ```
 Note this macro allows expressions:
-```@example quickstart; continued=true
+```
 dJ = 1e-3
 str = "Some Error Code: "
 @log "ΔJ" dJ
@@ -46,18 +46,18 @@ str = "Some Error Code: "
 ```
 As a convenient shortcut, we if the local variable name matches the name of the field
 we can just pass the local variable and the name will be automatically extracted:
-```@example quickstart; continued=true
+```
 iter = 2
 @log iter 
 ```
 To print the output use [`printlog`](@ref):
-```@example quickstart; continued=true
+```
 iter = 2
 @log iter 
 ```
 which will automatically handle printing the header lines. Here we call it in a loop,
 updating the iteration field each time:
-```@example quickstart; continued=false
+```
 for iter = 1:15
     @log iter
     printlog()

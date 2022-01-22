@@ -12,7 +12,7 @@ possible conflicts.
 !!! tip
     You can extract the default logger by accessing it directly at `SolverLogger.DEFAULT_LOGGER`
 
-```@example ex1; continue=true
+```
 using  SolverLogging
 logger = SolverLogging.Logger()
 setentry(logger, "iter", Int, width=5)
@@ -25,7 +25,7 @@ logger options. Here we change the header print frequency to print every 5
 iterations instead of the default 10, eliminate the line under the header, and
 set the header to print in bold yellow:
 
-```@example ex1; continue=true
+```
 using Crayons
 logger.opts.freq = 5
 logger.opts.linechar = '\0'
@@ -35,7 +35,7 @@ logger.opts.headerstyle = crayon"bold yellow";
 If we set the verbosity to 1 and print, we'll see that it doesn't print the `dJ`
 field:
 
-```@example ex1; continue=true
+```
 setlevel!(logger, 1)
 Jprev = 100
 for iter = 1:3
@@ -52,7 +52,7 @@ for iter = 1:3
 end
 ```
 If we change the verbosity to 2, we now see `dJ` printed out:
-```@example ex1; continue=true
+```
 setlevel!(logger, 2)  # note the change to 2
 Jprev = 100
 for iter = 1:5
@@ -70,7 +70,7 @@ end
 ```
 Note how the new output doesn't start with a header, since it's continuing the 
 count from before. We can change this by resetting the count with [`resetcount!`](@ref):
-```@example ex1; continue=false
+```
 setlevel!(logger, 1)               # note the change back to 1
 SolverLogging.resetcount!(logger)  # this resets the print count
 Jprev = 100
@@ -99,7 +99,7 @@ greater than 10.
 
 We create 2 [`ConditionalCrayon`](@ref) types to encode this behavior. Our first one
 can be covered using the constructor that takes a `lo` and `hi` value:
-```@example ex2; continue=true
+```
 using SolverLogging
 ccrayon_tol = ConditionalCrayon(1e-6,Inf, reverse=false)
 nothing # hide
@@ -110,7 +110,7 @@ than `hi` bad. We can reverse this with the optional `reverse` keyword.
 For our control formatting, let's say we want it to print orange if it's absolute 
 value is in between 1 and 10 and cyan if it's less than 1:
 
-```@example ex2; continue=true
+```
 using Crayons
 goodctrl = x->abs(x) < 1 
 badctrl = x->abs(x) > 10
@@ -125,14 +125,14 @@ nothing # hide
     Use `Crayons.test_256_colors()` to generate a sample of all the ANSI color codes.
 
 We can now specify these when we set up our fields:
-```@example ex2; continue=true
+```
 logger = SolverLogging.Logger()
 setentry(logger, "iter", Int, width=5)
 setentry(logger, "tol", Float64, ccrayon=ccrayon_tol)
 setentry(logger, "ctrl", Float64, fmt="%.1f", ccrayon=ccrayon_control)
 ```
 We should see the desired behavior when we print out some test values:
-```@example ex2; continue=false
+```
 for iter = 1:10
     tol = exp10(-iter)
     ctrl = 0.1*(iter-1)*iter^2
@@ -147,7 +147,7 @@ end
 ## Saving to a File
 Instead of writing to `stdout`, we can write a to a file. This interface is exactly
 the same, but we pass a filename or an `IOStream` to the logger when we create it:
-```@example
+```
 using SolverLogging
 filename = "log.out"
 logger = SolverLogging.Logger(filename)
