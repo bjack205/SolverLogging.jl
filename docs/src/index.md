@@ -51,13 +51,13 @@ iter = 2
 @log iter 
 ```
 To print the output use [`printlog`](@ref):
-```@example quickstart; continue=true
+```@example quickstart; continue=false
 iter = 2
 @log iter 
 ```
 which will automatically handle printing the header lines. Here we call it in a loop,
 updating the iteration field each time:
-```@example quickstart; continue=false
+```
 for iter = 1:15
     @log iter
     printlog()
