@@ -5,6 +5,7 @@ makedocs(
     sitename = "SolverLogging.jl",
     format = Documenter.HTML(
         prettyurls = !("local" in ARGS),
+        ansicolor=true
     ),
     pages = [
         "Introduction" => "index.md",
