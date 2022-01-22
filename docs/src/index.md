@@ -33,12 +33,12 @@ setentry("tol", level=2)    # sets it to verbosity level 2  (prints less often)
 ```
 After specifying the data we want to log, we log the data using the [`@log`](@ref)
 macro:
-```@example quickstart; continue=false
+```@example quickstart; continue=true
 @log "iter" 1
 @log "cost" 10.2
 ```
 Note this macro allows expressions:
-```
+```@example quickstart; continue=true
 dJ = 1e-3
 str = "Some Error Code: "
 @log "ΔJ" dJ
@@ -46,7 +46,7 @@ str = "Some Error Code: "
 ```
 As a convenient shortcut, we if the local variable name matches the name of the field
 we can just pass the local variable and the name will be automatically extracted:
-```
+```@example quickstart; continue=false
 iter = 2
 @log iter 
 ```
