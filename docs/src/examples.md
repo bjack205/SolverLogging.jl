@@ -99,7 +99,7 @@ greater than 10.
 
 We create 2 [`ConditionalCrayon`](@ref) types to encode this behavior. Our first one
 can be covered using the constructor that takes a `lo` and `hi` value:
-```
+```@example ex2; continue=true
 using SolverLogging
 ccrayon_tol = ConditionalCrayon(1e-6,Inf, reverse=false)
 nothing # hide
@@ -110,7 +110,7 @@ than `hi` bad. We can reverse this with the optional `reverse` keyword.
 For our control formatting, let's say we want it to print orange if it's absolute 
 value is in between 1 and 10 and cyan if it's less than 1:
 
-```
+```@example ex2; continue=true
 using Crayons
 goodctrl = x->abs(x) < 1 
 badctrl = x->abs(x) > 10
@@ -125,14 +125,14 @@ nothing # hide
     Use `Crayons.test_256_colors()` to generate a sample of all the ANSI color codes.
 
 We can now specify these when we set up our fields:
-```
+```@example ex2; continue=true
 logger = SolverLogging.Logger()
 setentry(logger, "iter", Int, width=5)
 setentry(logger, "tol", Float64, ccrayon=ccrayon_tol)
 setentry(logger, "ctrl", Float64, fmt="%.1f", ccrayon=ccrayon_control)
 ```
 We should see the desired behavior when we print out some test values:
-```
+```@example ex2; continue=false
 for iter = 1:10
     tol = exp10(-iter)
     ctrl = 0.1*(iter-1)*iter^2

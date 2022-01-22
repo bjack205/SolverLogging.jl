@@ -64,3 +64,7 @@ for iter = 1:15
     printlog()
 end
 ```
+
+
+## Sample Output
+A simple output with conditional formatting looks like this:
