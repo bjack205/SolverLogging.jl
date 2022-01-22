@@ -3,7 +3,9 @@ using SolverLogging
 
 makedocs(
     sitename = "SolverLogging.jl",
-    format = Documenter.HTML(prettyurls = false),
+    format = Documenter.HTML(
+        prettyurls = !("local" in ARGS),
+    ),
     pages = [
         "Introduction" => "index.md",
         "API" => "api.md",
