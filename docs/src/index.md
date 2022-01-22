@@ -51,16 +51,17 @@ iter = 2
 @log iter 
 ```
 To print the output use [`printlog`](@ref):
-```@example quickstart; continue=false
+```@example quickstart; continue=true
 iter = 2
 @log iter 
 ```
 which will automatically handle printing the header lines. Here we call it in a loop,
 updating the iteration field each time:
-```
+```@example quickstart; continue=false
+lg = SolverLogging.DEFAULT_LOGGER
 for iter = 1:15
-    @log iter
-    printlog()
+    @log lg iter
+    printlog(lg)
 end
 ```
 
