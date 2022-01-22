@@ -12,8 +12,8 @@ possible conflicts.
 !!! tip
     You can extract the default logger by accessing it directly at `SolverLogger.DEFAULT_LOGGER`
 
-```
-using  SolverLogging
+```@example
+using SolverLogging
 logger = SolverLogging.Logger()
 setentry(logger, "iter", Int, width=5)
 setentry(logger, "cost")
