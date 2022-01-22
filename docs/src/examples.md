@@ -12,7 +12,7 @@ possible conflicts.
 !!! tip
     You can extract the default logger by accessing it directly at `SolverLogger.DEFAULT_LOGGER`
 
-```@example
+```@example quickstart; continue=true
 using SolverLogging
 logger = SolverLogging.Logger()
 setentry(logger, "iter", Int, width=5)
@@ -25,7 +25,7 @@ logger options. Here we change the header print frequency to print every 5
 iterations instead of the default 10, eliminate the line under the header, and
 set the header to print in bold yellow:
 
-```
+```@example quickstart; continue=false
 using Crayons
 logger.opts.freq = 5
 logger.opts.linechar = '\0'
