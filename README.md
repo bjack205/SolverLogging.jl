@@ -68,3 +68,5 @@ end
 
 ## Sample Output
 A simple output with conditional formatting looks like this:
+
+![](https://github.com/bjack205/SolverLogging.jl/blob/ex2/docs/src/sample_output.png)
