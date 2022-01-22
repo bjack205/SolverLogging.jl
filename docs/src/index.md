@@ -18,47 +18,43 @@ the data from an iteration of the solver. The key features of this package are:
   based on a the current value.
 
 ## Quickstart
-To use the default logger provided by the package, start by specifying the fields
+To use the logger provided by the package, start by specifying the fields
 you want to log:
 
 ```@example quickstart; continue=true
 using SolverLogging
-SolverLogging.resetlogger!()  # good idea to always reset the global logger
-setentry("iter", Int, width=5)
-setentry("cost")
-setentry("info", String, width=25) 
-setentry("α", fmt="%6.4f")  # sets the numeric formatting
-setentry("ΔJ", index=-2)    # sets it to penultimate column
-setentry("tol", level=2)    # sets it to verbosity level 2  (prints less often)
+lg = SolverLogging.Logger()
+SolverLogging.resetlogger!(lg)  # good idea to always reset the global logger
+setentry(lg, "iter", Int, width=5)
+setentry(lg, "cost")
+setentry(lg, "info", String, width=25) 
+setentry(lg, "α", fmt="%6.4f")  # sets the numeric formatting
+setentry(lg, "ΔJ", index=-2)    # sets it to penultimate column
+setentry(lg, "tol", level=2)    # sets it to verbosity level 2  (prints less often)
 ```
 After specifying the data we want to log, we log the data using the [`@log`](@ref)
 macro:
 ```@example quickstart; continue=true
-@log "iter" 1
-@log "cost" 10.2
+@log lg "iter" 1
+@log lg "cost" 10.2
 ```
 Note this macro allows expressions:
 ```@example quickstart; continue=true
 dJ = 1e-3
 str = "Some Error Code: "
-@log "ΔJ" dJ
-@log "info" str * string(10)
+@log lg "ΔJ" dJ
+@log lg "info" str * string(10)
 ```
 As a convenient shortcut, we if the local variable name matches the name of the field
 we can just pass the local variable and the name will be automatically extracted:
 ```@example quickstart; continue=true
 iter = 2
-@log iter 
+@log lg iter 
 ```
-To print the output use [`printlog`](@ref):
-```@example quickstart; continue=true
-iter = 2
-@log iter 
-```
+To print the output use [`printlog`](@ref),
 which will automatically handle printing the header lines. Here we call it in a loop,
 updating the iteration field each time:
 ```@example quickstart; continue=false
-lg = SolverLogging.DEFAULT_LOGGER
 for iter = 1:15
     @log lg iter
     printlog(lg)
