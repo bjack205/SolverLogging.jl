@@ -46,18 +46,18 @@ str = "Some Error Code: "
 ```
 As a convenient shortcut, we if the local variable name matches the name of the field
 we can just pass the local variable and the name will be automatically extracted:
-```@example quickstart; continue=false
+```@example quickstart; continue=true
 iter = 2
 @log iter 
 ```
 To print the output use [`printlog`](@ref):
-```
+```@example quickstart; continue=true
 iter = 2
 @log iter 
 ```
 which will automatically handle printing the header lines. Here we call it in a loop,
 updating the iteration field each time:
-```
+```@example quickstart; continue=false
 for iter = 1:15
     @log iter
     printlog()
