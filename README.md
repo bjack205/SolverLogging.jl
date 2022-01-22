@@ -1,4 +1,5 @@
-[![Build Status](https://travis-ci.com/bjack205/SolverLogging.jl.svg?branch=master)](https://travis-ci.com/bjack205/SolverLogging.jl)
+[![CI](https://github.com/bjack205/SolverLogging.jl/actions/workflows/CI.yml/badge.svg)](https://github.com/bjack205/SolverLogging.jl/actions/workflows/CI.yml)
+[![](https://img.shields.io/badge/docs-dev-blue.svg)](https://bjack205.github.io/SolverLogging.jl/)
 
 # SolverLogging.jl
 This package provides a logger that is designed for use in iterative solvers.
