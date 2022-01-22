@@ -12,8 +12,8 @@ possible conflicts.
 !!! tip
     You can extract the default logger by accessing it directly at `SolverLogger.DEFAULT_LOGGER`
 
-```
-using  SolverLogging
+```@example ex1; continue=true
+using SolverLogging
 logger = SolverLogging.Logger()
 setentry(logger, "iter", Int, width=5)
 setentry(logger, "cost")
@@ -25,7 +25,7 @@ logger options. Here we change the header print frequency to print every 5
 iterations instead of the default 10, eliminate the line under the header, and
 set the header to print in bold yellow:
 
-```
+```@example ex1; continue=true
 using Crayons
 logger.opts.freq = 5
 logger.opts.linechar = '\0'
@@ -35,7 +35,7 @@ logger.opts.headerstyle = crayon"bold yellow";
 If we set the verbosity to 1 and print, we'll see that it doesn't print the `dJ`
 field:
 
-```
+```@example ex1; continue=true
 setlevel!(logger, 1)
 Jprev = 100
 for iter = 1:3
@@ -52,7 +52,7 @@ for iter = 1:3
 end
 ```
 If we change the verbosity to 2, we now see `dJ` printed out:
-```
+```@example ex1; continue=true
 setlevel!(logger, 2)  # note the change to 2
 Jprev = 100
 for iter = 1:5
@@ -70,7 +70,7 @@ end
 ```
 Note how the new output doesn't start with a header, since it's continuing the 
 count from before. We can change this by resetting the count with [`resetcount!`](@ref):
-```
+```@example ex1; continue=false
 setlevel!(logger, 1)               # note the change back to 1
 SolverLogging.resetcount!(logger)  # this resets the print count
 Jprev = 100
