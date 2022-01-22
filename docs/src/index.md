@@ -21,7 +21,7 @@ the data from an iteration of the solver. The key features of this package are:
 To use the default logger provided by the package, start by specifying the fields
 you want to log:
 
-```
+```@example quickstart; continue=false
 using SolverLogging
 SolverLogging.resetlogger!()  # good idea to always reset the global logger
 setentry("iter", Int, width=5)
