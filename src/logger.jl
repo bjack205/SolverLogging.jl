@@ -173,11 +173,16 @@ function _log!(log::Logger, name::String, val)
             crayon = espec.ccrayon(val)
             log.data[idx] = rpad(log.fmtfun[espec.fmt](val), espec.width)
             log.crayons[idx] = crayon
+            @debug "Logging $name with value $val at index $idx"
             if length(log.data[idx]) > espec.width
                 @warn "Entry for $name ($(log.data[idx])) is longer than field width ($(espec.width)). Alignment may be affected. Try increasing the field width."
             end
+        else
+            @debug "Not logging $name, level not high enough"
         end
         return nothing
+    else
+        @debug "Rejecting log for $name with value $val"
     end
 end
 

@@ -2,6 +2,7 @@ module SolverLogging
 using Printf
 using Formatting
 using Crayons
+using Logging
 
 include("utils.jl")
 include("conditional_crayon.jl")
