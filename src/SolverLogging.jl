@@ -37,15 +37,17 @@ end
 
 # Pass-through to actual function
 log_expr(logger, name::String, ex) = _log_expr(logger, name, ex)
+log_expr(logger, name::String, ex, op::QuoteNode) = _log_expr(logger, name, ex, op)
 
-function _log_expr(logger, name::String, expr)
+function _log_expr(logger, name::String, expr, op::QuoteNode=QuoteNode(:replace))
     quote
         let lg = $(esc(logger))
+            # @debug "Calling @log on $name"
             if isenabled(lg)
-                espec = lg.fmt[$name]
-                if lg.opts.curlevel <= espec.level
-                    _log!(lg, $name, $(esc(expr)))
-                end
+                # espec = lg.fmt[$name]
+                # if lg.opts.curlevel <= espec.level
+                _log!(lg, $name, $(esc(expr)), $op)
+                # end
             end
         end
     end

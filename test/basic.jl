@@ -157,6 +157,13 @@ begin
     end
 end
 
+# Try append operation for strings
+setentry(lg, "info", width=25)
+SolverLogging._log!(lg, "info", "more info", :append)
+@test occursin("more info", lg.data[SolverLogging.getidx(lg, "info")]) &&
+    occursin("hi there.", lg.data[SolverLogging.getidx(lg, "info")])
+printlog(lg)
+
 # Print a lower verbosity level and make sure there
 # aren't any extra entries
 @test SolverLogging.setlevel!(lg, 1) == 2

@@ -164,14 +164,33 @@ Internal method for logging a value with the logger. Users should prefer to use 
 Internally, this method converts `val` to a string using the format specifications
 and calculates the color using the [`ConditionalCrayon`](@ref) for the entry.
 """
-function _log!(log::Logger, name::String, val)
+function _log!(log::Logger, name::String, val, op::Symbol=:replace)
     if haskey(log.fmt, name)
         espec = log.fmt[name]
         if espec.level <= log.opts.curlevel
             idx = log.idx[espec.uid]
             fun = log.fmtfun[espec.fmt]
             crayon = espec.ccrayon(val)
-            log.data[idx] = rpad(log.fmtfun[espec.fmt](val), espec.width)
+            if op == :replace
+                log.data[idx] = rpad(log.fmtfun[espec.fmt](val), espec.width)
+            elseif op == :append
+                if espec.type <: AbstractString
+                    data0 = rstrip(log.data[idx])
+                    log.data[idx] = rpad(
+                        data0 * ". "  * log.fmtfun[espec.fmt](string(val)), 
+                        espec.width
+                    )
+                else
+                    @warn "Cannot append to a non-string entry."
+                end
+            elseif op == :add
+                if espec.type <: Number
+                    data0 = parse(espec.type, rstrip(log.data[idx]))
+                    log.data[idx] = rpad(log.fmtfun[espec.fmt](val + data0), espec.width)
+                else
+                    @warn "Cannot add to a non-numeric field. Use :append for strings."
+                end
+            end
             log.crayons[idx] = crayon
             @debug "Logging $name with value $val at index $idx"
             if length(log.data[idx]) > espec.width
@@ -191,7 +210,7 @@ end
 
 Gets the current verbosity level for the logger.
 """
-getlevel(logger::Logger) = log.opts.curlevel
+getlevel(logger::Logger) = logger.opts.curlevel
 
 
 """

@@ -63,8 +63,8 @@ function setentry(log::Logger, name::String, type::Type{T}=Float64;
         end
 
         if fmt != espec.fmt || level != espec.level || width != espec.width || 
-             T != espec.type || ccrayon != espec.ccrayon
-            log.fmt[name] = EntrySpec(T, fmt, fid, level, width, ccrayon)
+            ccrayon != espec.ccrayon
+            log.fmt[name] = EntrySpec(espec.type, fmt, fid, level, width, ccrayon)
         end
     else
         @assert type != Nothing "Must specify type for a new field"
