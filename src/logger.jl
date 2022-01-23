@@ -76,10 +76,6 @@ The logger can be completely reset via [`resetlogger!`](@ref).
 The logger can be enable/disabled via `SolverLogging.enable` and `SolverLogging.disable`.
 This overwrites the verbosity level.
 
-# Default logger
-Most methods that take a `SolverLogging.Logger` as the first argument (including `@log`)
-support omitting the logger, in which case the default logger stored in the `SolverLogging`
-module is used.
 """
 struct Logger
     io::IO

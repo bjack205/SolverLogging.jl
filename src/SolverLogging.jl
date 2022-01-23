@@ -6,7 +6,7 @@ using Crayons
 include("utils.jl")
 include("conditional_crayon.jl")
 include("logger.jl")
-include("default_logger.jl")
+# include("default_logger.jl")
 include("setentry.jl")
 
 # Set entries in default logger
