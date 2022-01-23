@@ -70,10 +70,18 @@ for i = 1:10
     @log lg "tol" exp(-i)
     printlog(lg)
 end
-flush(lg.io)
+SolverLogging.resetcount!(lg)
+lg.opts.linechar = '*'
+for i = 1:10
+    local iter = i
+    @log lg iter
+    @log lg "cost" log(10*i)
+    @log lg "tol" exp(-i)
+    printlog(lg)
+end
 @test lg.io isa IOStream
 lines = readlines(filename)
-@test length(lines) == 12
+@test length(lines) == 26
 for i in (1,7)
     @test occursin("iter", lines[i])
     @test occursin("cost", lines[i])
@@ -82,6 +90,7 @@ end
 for i = 2:6
     @test occursin("$(i-1)", lines[i])
 end
+@test length(filter(x->occursin("***", x), lines)) == 2
 rm(filename)
 
 ## Test Condition formatting

@@ -129,6 +129,7 @@ function Base.empty!(log::Logger)
 end
 
 function clear!(log::Logger)
+    level = getlevel(log)
     for (k,v) in pairs(log.fmt)
         idx = log.idx[v.uid]
         if v.level > level
@@ -344,3 +345,5 @@ end
 
 # Gets the index of the field `name`
 @inline getidx(log::Logger, name::String) = log.idx[log.fmt[name].uid]
+
+_getdata(log::Logger, name::String) = log.data[getidx(log, name)]
