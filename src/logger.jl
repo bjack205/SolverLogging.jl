@@ -132,6 +132,17 @@ function Base.empty!(log::Logger)
     return log
 end
 
+function clear!(log::Logger)
+    for (k,v) in pairs(log.fmt)
+        idx = log.idx[v.uid]
+        if v.level > level
+            log.data[idx] = ""
+        else
+            log.data[idx] = " "^v.width 
+        end
+    end
+end
+
 """
     resetcount!(logger)
 
