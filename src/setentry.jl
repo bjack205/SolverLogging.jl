@@ -71,7 +71,7 @@ function setentry(log::Logger, name::String, type::Type{T}=Float64;
 
         # Insert new field
         fid = length(log.idx) + 1
-        insert!(log.data, index, "")
+        insert!(log.data, index, " "^width)
         insert!(log.crayons, index, Crayon(reset=true))
         push!(log.idx, fid)
         shiftidx!(log.idx, fid, index)

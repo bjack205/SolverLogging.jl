@@ -197,6 +197,8 @@ function setlevel!(log::Logger, level)
         idx = log.idx[v.uid]
         if v.level > level
             log.data[idx] = ""
+        else
+            log.data[idx] = rpad(log.data[idx], v.width)
         end
     end
     return prevlvl
