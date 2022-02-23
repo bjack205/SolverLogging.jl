@@ -54,9 +54,28 @@ for iter = 1:12
     printlog(lg)
 end
 println("...and this line")
+SolverLogging.enable(lg)
+@test lg.opts.enable == true
 
 SolverLogging.resetlogger!(lg)
 @test length(lg.data) == 0
+
+## Test Info field
+setentry(lg, "info", String, width=20)
+@log lg "info" "Cost Increase"
+occursin("Cost Increase", lg.data[1])
+
+# Should insert a period
+@log lg "info" "Max Iters." :append
+occursin("Cost Increase. Max Iters", lg.data[1])
+
+# Try inserting spaces
+@log lg "info" "   "
+@log lg "info" "New message"
+@test lg.data[1][1:3] == "New"
+
+ENV["JULIA_DEBUG"] = "SolverLogging"
+@test_logs (:debug,r"Rejecting") @log lg "new" 1.0
 
 ## Test output to a file
 filename = joinpath(@__DIR__, "log.out")
