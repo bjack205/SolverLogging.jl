@@ -45,8 +45,8 @@ SolverLogging.setentry(lg, "iter", Int, fmt="%3d", index=2)
 @test SolverLogging.getidx(lg, "iter") == 2
 
 # New string field
-SolverLogging.setentry(lg, "info", String, index=1)
-@test lg.fmt["info"] == EntrySpec(String,"%s",3)
+SolverLogging.setentry(lg, "info", String, index=1, width=20)
+@test lg.fmt["info"] == EntrySpec(String,"%s",3,1,20)
 @test SolverLogging.getidx(lg, "info") == 1
 @test SolverLogging.getidx(lg, "alpha") == 2
 @test SolverLogging.getidx(lg, "iter") == 3
@@ -55,7 +55,7 @@ lg.data[1] = "info"
 
 # Move an existing field (1 to 3)
 SolverLogging.setentry(lg, "info", String, index=-1)
-@test lg.fmt["info"] == EntrySpec(String,"%s",3)
+@test lg.fmt["info"] == EntrySpec(String,"%s",3,1,20)
 @test lg.data == ["alpha","iter","info"]
 @test lg.idx == [1,2,3]
 
@@ -102,9 +102,17 @@ SolverLogging.setentry(lg, "ϕ", Int32, level=2)
 SolverLogging.setentry(lg, "ϕ", Int32, width=12) 
 @test lg.fmt["ϕ"] == EntrySpec(Int32,"%5d", 4, 2, 12)
 
-# @test (@allocated SolverLogging.setentry(lg, "ϕ", Int32, index=-3, fmt="%5d")) == 0
+# Test clear
+SolverLogging.clear!(lg)
+for i in (1,3,4)
+    @test all(isspace, lg.data[1])
+end
+@test isempty(lg.data[2])
 
+
+#############################################
 ## Log values
+#############################################
 SolverLogging._log!(lg, "iter", 1)
 @test lg.data[3] == "  1        "
 @test parse(Int,lg.data[3]) == 1
@@ -112,11 +120,12 @@ SolverLogging._log!(lg, "iter", 200)
 @test parse(Int,lg.data[3]) == 200 
 
 SolverLogging._log!(lg, "info", "hi there")
-@test lg.data[4] == rpad("hi there", 10)
+@test lg.data[4] == rpad("hi there", 20)
 
 SolverLogging.setentry(lg, "alpha", Float64, width=6)
-@test_logs (:warn,) SolverLogging._log!(lg, "alpha", 1e-3)
-@test lg.data[1] == "1.00e-03"
+lg.opts.autosize = false
+@test_logs (:warn,) SolverLogging._log!(lg, "alpha", 1.234567e-3)
+@test lg.data[1] == "1.23e-03"
 
 SolverLogging.setentry(lg, "alpha", Float64, width=10)
 SolverLogging._log!(lg, "alpha", 1e-3)
@@ -130,24 +139,79 @@ SolverLogging.setentry(lg, "alpha", index=2)
 
 SolverLogging.setentry(lg, "alpha", index=1)
 
+# Test append operation
+lg.opts.autosize = false 
+SolverLogging._log!(lg, "info", "hi there")
+info = SolverLogging._getdata(lg, "info")
+length(info) == 20  
+SolverLogging._log!(lg, "info", "Something", :append)
+newinfo = SolverLogging._getdata(lg, "info")
+@test newinfo == rpad("hi there. Something", 20)
+@test_logs (:warn,) SolverLogging._log!(lg, "info", "new", :append)
+info = SolverLogging._getdata(lg, "info")
+@test length(info) > 20
+
+lg.opts.autosize = true
+SolverLogging._log!(lg, "info", "hi there")
+info = SolverLogging._getdata(lg, "info")
+length(info) == 20  
+SolverLogging._log!(lg, "info", "Something", :append)
+newinfo = SolverLogging._getdata(lg, "info")
+@test newinfo == rpad("hi there. Something", 20)
+@test_nowarn SolverLogging._log!(lg, "info", "new", :append)
+info = SolverLogging._getdata(lg, "info")
+@test length(info) > 20
+@test Int(lg.fmt["info"].width) == length(info)
+
+@test_logs (:warn,) SolverLogging._log!(lg, "iter", 1, :append)
+SolverLogging._log!(lg, "iter", "new", :append)
+newinfo = SolverLogging._getdata(lg, "info")
+
+# Test add operation
+SolverLogging._log!(lg, "iter", 11)
+iter = parse(Int,SolverLogging._getdata(lg, "iter"))
+SolverLogging._log!(lg, "iter", 2, :add)
+newiter = parse(Int,SolverLogging._getdata(lg, "iter"))
+@test newiter == iter + 2
+
+SolverLogging._log!(lg, "info", "hi there")
+@test_logs (:warn,r"Cannot add*") SolverLogging._log!(lg, "info", "a", :add)
+
 ## Test printing and verbosity
+setentry(lg, "info", width=20)
+SolverLogging._log!(lg, "info", "")
 SolverLogging.setlevel!(lg, 1)
 @test lg.data[2] == ""
 SolverLogging._log!(lg, "ϕ", 3)
 @test lg.data[2] == ""
 @test !occursin("ϕ", SolverLogging.formheader(lg))
-@test length(SolverLogging.formrow(lg)) == 31
+@test length(SolverLogging.formrow(lg)) == 41
+setentry(lg, "info", index=2)
+
+setentry(lg, "info", width=20)
+SolverLogging._log!(lg, "info", "hi there")
 SolverLogging.printheader(lg)
 for i = 1:10
     SolverLogging._log!(lg, "alpha", 2i-5)
     SolverLogging.printrow(lg)
 end
 
+# Try expanding column
+setentry(lg, "info", width=20)
+SolverLogging._log!(lg, "info", "hi there")
+lg.opts.freq = 10 
+SolverLogging.resetcount!(lg)
+for i = 1:10
+    SolverLogging._log!(lg, "alpha", 2i-5)
+    SolverLogging._log!(lg, "info", "$i", :append)
+    SolverLogging.printlog(lg)
+end
+
 @test SolverLogging.setlevel!(lg, 2) == 1
 SolverLogging._log!(lg, "ϕ", 3)
-@test lg.data[2] == rpad("    3", 12)
+@test lg.data[3] == rpad("    3", 12)
 @test occursin("ϕ", SolverLogging.formheader(lg))
-@test length(SolverLogging.formrow(lg)) == 43 
+@test length(SolverLogging.formrow(lg)) == 85
 
 begin
     SolverLogging.printheader(lg)
@@ -156,6 +220,13 @@ begin
         SolverLogging.printrow(lg)
     end
 end
+
+# Try append operation for strings
+setentry(lg, "info", width=25)
+SolverLogging._log!(lg, "info", "more info", :append)
+@test occursin("more info", lg.data[SolverLogging.getidx(lg, "info")]) &&
+    occursin("hi there.", lg.data[SolverLogging.getidx(lg, "info")])
+printlog(lg)
 
 # Print a lower verbosity level and make sure there
 # aren't any extra entries

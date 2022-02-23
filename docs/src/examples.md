@@ -9,9 +9,6 @@ The [Quickstart](@ref) used the default logger provided by this package. It's
 usually a better idea to have your own local logger you can use, to avoid 
 possible conflicts. 
 
-!!! tip
-    You can extract the default logger by accessing it directly at `SolverLogger.DEFAULT_LOGGER`
-
 ```@example ex1; continue=true
 using SolverLogging
 logger = SolverLogging.Logger()

@@ -2,74 +2,80 @@ using SolverLogging
 using Crayons
 using Test
 
-## API
-"""
-@log "α" 2.2
-
-SolverLogging.enable()
-SolverLogging.disable()
-"""
-
 ##
-SolverLogging.resetlogger!()
-setentry("iter", Int64, width=5)
-setentry("cost")
-setentry("ΔJ")
-setentry("α", fmt="%6.4f")
-setentry("info", String)
-lg = SolverLogging.DEFAULT_LOGGER
+lg = SolverLogging.Logger()
+SolverLogging.resetlogger!(lg)
+setentry(lg, "iter", Int64, width=5)
+setentry(lg, "cost")
+setentry(lg, "ΔJ")
+setentry(lg, "α", fmt="%6.4f")
+setentry(lg, "info", String)
 
 a = 1+2
 itr = 1
-@log "iter" itr 
-@log "cost" 10a
-@log "ΔJ" 1e-3
+@log lg "iter" itr 
+@log lg "cost" 10a
+@log lg "ΔJ" 1e-3
 cost = 12.0
-@log cost 
-printheader()
+@log lg cost 
+printheader(lg)
 SolverLogging.formrow(lg)
-printrow()
+printrow(lg)
 @test lg.opts._count == 1
-printrow()
+printrow(lg)
 @test lg.opts._count == 2
 
 iter = 2
-@log iter
+@log lg iter
 lg.data
-printlog()
+printlog(lg)
 
-SolverLogging.resetcount!()
+# Test the add operation
+@log lg "iter" 1 :add
+@test parse(Int,lg.data[1]) == 3
+
+setentry(lg, "info", String, width=25)
+@log lg "info" "Some info"
+
+SolverLogging.resetcount!(lg)
 for iter = 1:12
-    @log iter
-    printlog()
-end
-@test SolverLogging.isenabled()
-
-println("\nNothing should print between this line...")
-SolverLogging.disable()
-SolverLogging.resetcount!()
-for iter = 1:12
-    @log iter
-    printlog()
-end
-println("...and this line")
-
-## Use a local logger
-lg = SolverLogging.Logger()
-setentry(lg, "iter", Int)
-setentry(lg, "cost", Float64)
-setentry(lg, "tol", Float64, level=2)
-lg.opts.freq = 5
-lg.opts.linechar = 0
-lg.opts.headerstyle = crayon"yellow"
-iter = 1
-for i = 1:10
-    local iter = i
     @log lg iter
-    @log lg "cost" log(10*i)
-    @log lg "tol" exp(-i)
+    iter == 12 && @log lg "info" "last iter" :append
     printlog(lg)
 end
+@test occursin("Some info. last iter", SolverLogging.formrow(lg))
+@test SolverLogging.isenabled(lg)
+
+println("\nNothing should print between this line...")
+SolverLogging.disable(lg)
+SolverLogging.resetcount!(lg)
+for iter = 1:12
+    @log lg iter
+    printlog(lg)
+end
+println("...and this line")
+SolverLogging.enable(lg)
+@test lg.opts.enable == true
+
+SolverLogging.resetlogger!(lg)
+@test length(lg.data) == 0
+
+## Test Info field
+setentry(lg, "info", String, width=20)
+@log lg "info" "Cost Increase"
+occursin("Cost Increase", lg.data[1])
+
+# Should insert a period
+@log lg "info" "Max Iters." :append
+occursin("Cost Increase. Max Iters", lg.data[1])
+
+# Try inserting spaces
+@log lg "info" "   "
+@log lg "info" "New message"
+@test lg.data[1][1:3] == "New"
+
+ENV["JULIA_DEBUG"] = "SolverLogging"
+@test_logs (:debug,r"Rejecting") @log lg "new" 1.0
 
 ## Test output to a file
 filename = joinpath(@__DIR__, "log.out")
@@ -81,16 +87,24 @@ lg.opts.freq = 5
 lg.opts.linechar = 0
 iter = 1
 for i = 1:10
-    iter = i
+    local iter = i
     @log lg iter
     @log lg "cost" log(10*i)
     @log lg "tol" exp(-i)
     printlog(lg)
 end
-flush(lg.io)
+SolverLogging.resetcount!(lg)
+lg.opts.linechar = '*'
+for i = 1:10
+    local iter = i
+    @log lg iter
+    @log lg "cost" log(10*i)
+    @log lg "tol" exp(-i)
+    printlog(lg)
+end
 @test lg.io isa IOStream
 lines = readlines(filename)
-@test length(lines) == 12
+@test length(lines) == 26
 for i in (1,7)
     @test occursin("iter", lines[i])
     @test occursin("cost", lines[i])
@@ -99,10 +113,10 @@ end
 for i = 2:6
     @test occursin("$(i-1)", lines[i])
 end
+@test length(filter(x->occursin("***", x), lines)) == 2
 rm(filename)
 
 ## Test Condition formatting
-
 ccrayon_tol = ConditionalCrayon(1e-6,Inf, reverse=false)
 
 goodctrl = x->abs(x) < 1 
@@ -124,6 +138,3 @@ for iter = 1:10
     @log logger ctrl
     printlog(logger)
 end
-# cc = ConditionalCrayon(crayon"red", crayon"green", crayon"blue", 0, 10)
-# println(cc(0))
-# typeof(cc(5))

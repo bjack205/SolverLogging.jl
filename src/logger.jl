@@ -19,6 +19,7 @@ Base.@kwdef mutable struct LoggerOpts
     headerstyle::Crayon = crayon"bold blue"
     linechar::Char = '—'
     enable::Bool = true
+    autosize::Bool = true             # automatically expand columns
 end
 
 """
@@ -76,10 +77,6 @@ The logger can be completely reset via [`resetlogger!`](@ref).
 The logger can be enable/disabled via `SolverLogging.enable` and `SolverLogging.disable`.
 This overwrites the verbosity level.
 
-# Default logger
-Most methods that take a `SolverLogging.Logger` as the first argument (including `@log`)
-support omitting the logger, in which case the default logger stored in the `SolverLogging`
-module is used.
 """
 struct Logger
     io::IO
@@ -132,6 +129,18 @@ function Base.empty!(log::Logger)
     return log
 end
 
+function clear!(log::Logger)
+    level = getlevel(log)
+    for (k,v) in pairs(log.fmt)
+        idx = log.idx[v.uid]
+        if v.level > level
+            log.data[idx] = ""
+        else
+            log.data[idx] = " "^v.width 
+        end
+    end
+end
+
 """
     resetcount!(logger)
 
@@ -157,20 +166,56 @@ Internal method for logging a value with the logger. Users should prefer to use 
 Internally, this method converts `val` to a string using the format specifications
 and calculates the color using the [`ConditionalCrayon`](@ref) for the entry.
 """
-function _log!(log::Logger, name::String, val)
+function _log!(log::Logger, name::String, val, op::Symbol=:replace)
     if haskey(log.fmt, name)
         espec = log.fmt[name]
         if espec.level <= log.opts.curlevel
             idx = log.idx[espec.uid]
             fun = log.fmtfun[espec.fmt]
             crayon = espec.ccrayon(val)
-            log.data[idx] = rpad(log.fmtfun[espec.fmt](val), espec.width)
-            log.crayons[idx] = crayon
-            if length(log.data[idx]) > espec.width
-                @warn "Entry for $name ($(log.data[idx])) is longer than field width ($(espec.width)). Alignment may be affected. Try increasing the field width."
+            if op == :replace
+                log.data[idx] = rpad(log.fmtfun[espec.fmt](val), espec.width)
+            elseif op == :append
+                if espec.type <: AbstractString
+                    data0 = rstrip(log.data[idx])
+                    newdata = log.fmtfun[espec.fmt](string(val))
+                    if all(isspace, data0)
+                        data = newdata
+                    elseif data0[end] == '.'
+                        data = data0 * " " * newdata
+                    else
+                        data = data0 * ". " * newdata
+                    end
+                    log.data[idx] = rpad( data, espec.width)
+                else
+                    @warn "Cannot append to a non-string entry."
+                end
+            elseif op == :add
+                if espec.type <: Number
+                    data0 = parse(espec.type, rstrip(log.data[idx]))
+                    log.data[idx] = rpad(log.fmtfun[espec.fmt](val + data0), espec.width)
+                else
+                    @warn "Cannot add to a non-numeric field. Use :append for strings."
+                end
             end
+            log.crayons[idx] = crayon
+            @debug "Logging $name with value $val at index $idx"
+            if length(log.data[idx]) > espec.width
+                if log.opts.autosize
+                    newwidth = round(Int, length(log.data[idx])*1.5)
+                    setentry(log, name, width = newwidth)
+                    log.opts._count = 0
+                    log.data[idx] = rpad(log.data[idx], newwidth)
+                else
+                    @warn "Entry for $name ($(log.data[idx])) is longer than field width ($(espec.width)). Alignment may be affected. Try increasing the field width."
+                end
+            end
+        else
+            @debug "Not logging $name, level not high enough"
         end
         return nothing
+    else
+        @debug "Rejecting log for $name with value $val"
     end
 end
 
@@ -179,7 +224,7 @@ end
 
 Gets the current verbosity level for the logger.
 """
-getlevel(logger::Logger) = log.opts.curlevel
+getlevel(logger::Logger) = logger.opts.curlevel
 
 
 """
@@ -197,6 +242,8 @@ function setlevel!(log::Logger, level)
         idx = log.idx[v.uid]
         if v.level > level
             log.data[idx] = ""
+        else
+            log.data[idx] = rpad(log.data[idx], v.width)
         end
     end
     return prevlvl
@@ -311,3 +358,5 @@ end
 
 # Gets the index of the field `name`
 @inline getidx(log::Logger, name::String) = log.idx[log.fmt[name].uid]
+
+_getdata(log::Logger, name::String) = log.data[getidx(log, name)]
