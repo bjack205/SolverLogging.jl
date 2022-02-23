@@ -11,3 +11,5 @@ Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"
 
 [compat]
 julia = "1"
+Crayons = "4"
+Formatting = "0.4"
