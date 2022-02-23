@@ -4,6 +4,7 @@ using Test
 
 ##
 lg = SolverLogging.Logger()
+SolverLogging.resetlogger!(lg)
 setentry(lg, "iter", Int64, width=5)
 setentry(lg, "cost")
 setentry(lg, "ΔJ")
@@ -53,6 +54,9 @@ for iter = 1:12
     printlog(lg)
 end
 println("...and this line")
+
+SolverLogging.resetlogger!(lg)
+@test length(lg.data) == 0
 
 ## Test output to a file
 filename = joinpath(@__DIR__, "log.out")

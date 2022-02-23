@@ -19,6 +19,7 @@ Base.@kwdef mutable struct LoggerOpts
     headerstyle::Crayon = crayon"bold blue"
     linechar::Char = '—'
     enable::Bool = true
+    autosize::Bool = true             # automatically expand columns
 end
 
 """
@@ -177,10 +178,15 @@ function _log!(log::Logger, name::String, val, op::Symbol=:replace)
             elseif op == :append
                 if espec.type <: AbstractString
                     data0 = rstrip(log.data[idx])
-                    log.data[idx] = rpad(
-                        data0 * ". "  * log.fmtfun[espec.fmt](string(val)), 
-                        espec.width
-                    )
+                    newdata = log.fmtfun[espec.fmt](string(val))
+                    if all(isspace, data0)
+                        data = newdata
+                    elseif data0[end] == '.'
+                        data = data0 * " " * newdata
+                    else
+                        data = data0 * ". " * newdata
+                    end
+                    log.data[idx] = rpad( data, espec.width)
                 else
                     @warn "Cannot append to a non-string entry."
                 end
@@ -195,7 +201,14 @@ function _log!(log::Logger, name::String, val, op::Symbol=:replace)
             log.crayons[idx] = crayon
             @debug "Logging $name with value $val at index $idx"
             if length(log.data[idx]) > espec.width
-                @warn "Entry for $name ($(log.data[idx])) is longer than field width ($(espec.width)). Alignment may be affected. Try increasing the field width."
+                if log.opts.autosize
+                    newwidth = round(Int, length(log.data[idx])*1.5)
+                    setentry(log, name, width = newwidth)
+                    log.opts._count = 0
+                    log.data[idx] = rpad(log.data[idx], newwidth)
+                else
+                    @warn "Entry for $name ($(log.data[idx])) is longer than field width ($(espec.width)). Alignment may be affected. Try increasing the field width."
+                end
             end
         else
             @debug "Not logging $name, level not high enough"
